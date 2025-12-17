@@ -27,15 +27,40 @@ const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
+// 18 Reasons I Love You
+const LOVE_REASONS = [
+  "Your smile lights up my world",
+  "You make every day worth living",
+  "Your kindness inspires me",
+  "You are always there for me",
+  "You always know how to cheer me up",
+  "Your hugs feel like home",
+  "You believe in me",
+  "You're my best friend",
+  "Our goofy video calls",
+  "Your baby side",
+  "You're beautiful inside and out",
+  "You understand me like no one else",
+  "Your personality",
+  "You're patient and caring",
+  "How we talk about our future",
+  "You're always there for me",
+  "You complete me",
+  "I can't my imagine life without you",
+];
+
 type AnimatedSceneProps = {
   isPlaying: boolean;
   onBackgroundFadeChange?: (opacity: number) => void;
   onEnvironmentProgressChange?: (progress: number) => void;
-  candleLit: boolean;
+  candlesLit: boolean[];
   onAnimationComplete?: () => void;
   cards: ReadonlyArray<BirthdayCardConfig>;
   activeCardId: string | null;
   onToggleCard: (id: string) => void;
+  hoveredCandleIndex: number | null;
+  onCandleHover: (index: number | null) => void;
+  onCandleClick: (index: number) => void;
 };
 
 const CAKE_START_Y = 10;
@@ -101,23 +126,37 @@ const BIRTHDAY_CARDS: ReadonlyArray<BirthdayCardConfig> = [
     id: "confetti",
     image: "/card.png",
     position: [1, 0.081, -2],
-    rotation: [-Math.PI / 2 , 0, Math.PI / 3],
-  }
+    rotation: [-Math.PI / 2, 0, Math.PI / 3],
+  },
 ];
+
+// Calculate positions for 18 candles in a circle
+const getCandlePositions = (): [number, number, number][] => {
+  return Array.from({ length: 18 }, (_, i) => {
+    const angle = (i / 18) * Math.PI * 2;
+    const radius = 0.35;
+    return [Math.cos(angle) * radius, 1.1, Math.sin(angle) * radius];
+  });
+};
+
+const CANDLE_POSITIONS = getCandlePositions();
 
 function AnimatedScene({
   isPlaying,
   onBackgroundFadeChange,
   onEnvironmentProgressChange,
-  candleLit,
+  candlesLit,
   onAnimationComplete,
   cards,
   activeCardId,
   onToggleCard,
+  hoveredCandleIndex,
+  onCandleHover,
+  onCandleClick,
 }: AnimatedSceneProps) {
   const cakeGroup = useRef<Group>(null);
   const tableGroup = useRef<Group>(null);
-  const candleGroup = useRef<Group>(null);
+  const candlesGroup = useRef<Group>(null);
   const animationStartRef = useRef<number | null>(null);
   const hasPrimedRef = useRef(false);
   const hasCompletedRef = useRef(false);
@@ -149,9 +188,9 @@ function AnimatedScene({
   useFrame(({ clock }) => {
     const cake = cakeGroup.current;
     const table = tableGroup.current;
-    const candle = candleGroup.current;
+    const candles = candlesGroup.current;
 
-    if (!cake || !table || !candle) {
+    if (!cake || !table || !candles) {
       return;
     }
 
@@ -160,8 +199,8 @@ function AnimatedScene({
       cake.rotation.set(0, 0, 0);
       table.position.set(0, 0, TABLE_START_Z);
       table.rotation.set(0, 0, 0);
-      candle.position.set(0, CANDLE_START_Y, 0);
-      candle.visible = false;
+      candles.position.set(0, CANDLE_START_Y, 0);
+      candles.visible = false;
       hasPrimedRef.current = true;
     }
 
@@ -214,8 +253,8 @@ function AnimatedScene({
     table.rotation.set(0, 0, 0);
 
     if (clampedElapsed >= CANDLE_DROP_START) {
-      if (!candle.visible) {
-        candle.visible = true;
+      if (!candles.visible) {
+        candles.visible = true;
       }
       const candleProgress = clamp(
         (clampedElapsed - CANDLE_DROP_START) / CANDLE_DROP_DURATION,
@@ -223,10 +262,10 @@ function AnimatedScene({
         1
       );
       const candleEase = easeOutCubic(candleProgress);
-      candle.position.y = lerp(CANDLE_START_Y, CANDLE_END_Y, candleEase);
+      candles.position.y = lerp(CANDLE_START_Y, CANDLE_END_Y, candleEase);
     } else {
-      candle.visible = false;
-      candle.position.set(0, CANDLE_START_Y, 0);
+      candles.visible = false;
+      candles.position.set(0, CANDLE_START_Y, 0);
     }
 
     if (clampedElapsed < BACKGROUND_FADE_START) {
@@ -249,8 +288,8 @@ function AnimatedScene({
       cake.position.set(0, CAKE_END_Y, 0);
       cake.rotation.set(0, 0, 0);
       table.position.set(0, 0, TABLE_END_Z);
-      candle.position.set(0, CANDLE_END_Y, 0);
-      candle.visible = true;
+      candles.position.set(0, CANDLE_END_Y, 0);
+      candles.visible = true;
       emitBackgroundOpacity(0);
       emitEnvironmentProgress(1);
       hasCompletedRef.current = true;
@@ -304,8 +343,18 @@ function AnimatedScene({
       <group ref={cakeGroup}>
         <Cake />
       </group>
-      <group ref={candleGroup}>
-        <Candle isLit={candleLit} scale={0.25} position={[0, 1.1, 0]} />
+      <group ref={candlesGroup}>
+        {CANDLE_POSITIONS.map((position, index) => (
+          <group
+            key={index}
+            position={position}
+            onPointerOver={() => onCandleHover(index)}
+            onPointerOut={() => onCandleHover(null)}
+            onClick={() => onCandleClick(index)}
+          >
+            <Candle isLit={candlesLit[index]} scale={0.15} />
+          </group>
+        ))}
       </group>
     </>
   );
@@ -356,15 +405,14 @@ function EnvironmentBackgroundController({
 
   useEffect(() => {
     if ("backgroundIntensity" in scene) {
-      // Cast required because older typings might not include backgroundIntensity yet.
-      (scene as typeof scene & { backgroundIntensity: number }).backgroundIntensity =
-        intensity;
+      (
+        scene as typeof scene & { backgroundIntensity: number }
+      ).backgroundIntensity = intensity;
     }
   }, [scene, intensity]);
 
   return null;
 }
-
 
 export default function App() {
   const [hasStarted, setHasStarted] = useState(false);
@@ -375,10 +423,41 @@ export default function App() {
   const [sceneStarted, setSceneStarted] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [hasAnimationCompleted, setHasAnimationCompleted] = useState(false);
-  const [isCandleLit, setIsCandleLit] = useState(true);
+  const [candlesLit, setCandlesLit] = useState<boolean[]>(Array(18).fill(true));
   const [fireworksActive, setFireworksActive] = useState(false);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [hoveredCandleIndex, setHoveredCandleIndex] = useState<number | null>(
+    null
+  );
+  const [showVideo, setShowVideo] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Time sync effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Time zones - Change 'America/Chicago' to your timezone
+  const yourTimeZone = "America/Chicago";
+  const herTimeZone = "Asia/Kolkata"; // India timezone
+
+  const yourTime = currentTime.toLocaleTimeString("en-US", {
+    timeZone: yourTimeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  const herTime = currentTime.toLocaleTimeString("en-US", {
+    timeZone: herTimeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 
   useEffect(() => {
     const audio = new Audio("/music.mp3");
@@ -401,7 +480,7 @@ export default function App() {
     }
     audio.currentTime = 0;
     void audio.play().catch(() => {
-      // ignore play errors (browser might block)
+      // ignore play errors
     });
   }, []);
 
@@ -435,9 +514,10 @@ export default function App() {
       setCurrentLineIndex(0);
       setCurrentCharIndex(0);
       setSceneStarted(false);
-      setIsCandleLit(true);
+      setCandlesLit(Array(18).fill(true));
       setFireworksActive(false);
       setHasAnimationCompleted(false);
+      setShowVideo(false);
       return;
     }
 
@@ -486,6 +566,8 @@ export default function App() {
     return () => window.clearInterval(handle);
   }, []);
 
+  const allCandlesBlown = candlesLit.every((lit) => !lit);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code !== "Space" && event.key !== " ") {
@@ -497,19 +579,48 @@ export default function App() {
         setHasStarted(true);
         return;
       }
-      if (hasAnimationCompleted && isCandleLit) {
-        setIsCandleLit(false);
+      if (hasAnimationCompleted && !allCandlesBlown) {
+        // Blow out all candles with spacebar
+        setCandlesLit(Array(18).fill(false));
         setFireworksActive(true);
+        // Show video after 3 seconds of fireworks
+        setTimeout(() => {
+          setShowVideo(true);
+        }, 3000);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasStarted, hasAnimationCompleted, isCandleLit, playBackgroundMusic]);
+  }, [hasStarted, hasAnimationCompleted, allCandlesBlown, playBackgroundMusic]);
 
   const handleCardToggle = useCallback((id: string) => {
     setActiveCardId((current) => (current === id ? null : id));
   }, []);
+
+  const handleCandleClick = useCallback(
+    (index: number) => {
+      if (hasAnimationCompleted) {
+        setCandlesLit((prev) => {
+          const newState = [...prev];
+          newState[index] = false;
+
+          // Check if all candles are blown
+          const allBlown = newState.every((lit) => !lit);
+          if (allBlown) {
+            setFireworksActive(true);
+            // Show video after 3 seconds
+            setTimeout(() => {
+              setShowVideo(true);
+            }, 3000);
+          }
+
+          return newState;
+        });
+      }
+    },
+    [hasAnimationCompleted]
+  );
 
   const isScenePlaying = hasStarted && sceneStarted;
 
@@ -538,9 +649,140 @@ export default function App() {
           })}
         </div>
       </div>
-      {hasAnimationCompleted && isCandleLit && (
-        <div className="hint-overlay">press space to blow out the candle</div>
+
+      {/* Time Zone Display */}
+      {sceneStarted && (
+        <div
+          style={{
+            position: "absolute",
+            top: "2rem",
+            right: "2rem",
+            zIndex: 3,
+            color: "white",
+            fontFamily: '"Courier New", monospace',
+            fontSize: "0.9rem",
+            background: "rgba(0, 0, 0, 0.5)",
+            padding: "1rem",
+            borderRadius: "8px",
+            textAlign: "right",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <div style={{ marginBottom: "0.5rem" }}>
+            <div style={{ opacity: 0.7, fontSize: "0.8rem" }}>Your time</div>
+            <div style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
+              {yourTime}
+            </div>
+          </div>
+          <div>
+            <div style={{ opacity: 0.7, fontSize: "0.8rem" }}>
+              Her time (India)
+            </div>
+            <div
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+                color: "#ff69b4",
+              }}
+            >
+              {herTime}
+            </div>
+          </div>
+        </div>
       )}
+
+      {/* Love Reason Tooltip */}
+      {hoveredCandleIndex !== null && hasAnimationCompleted && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 5,
+            background: "rgba(255, 105, 180, 0.95)",
+            color: "white",
+            padding: "1.5rem 2rem",
+            borderRadius: "12px",
+            fontFamily: '"Courier New", monospace',
+            fontSize: "1.2rem",
+            maxWidth: "400px",
+            textAlign: "center",
+            boxShadow: "0 10px 40px rgba(255, 105, 180, 0.5)",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{ fontSize: "0.8rem", opacity: 0.9, marginBottom: "0.5rem" }}
+          >
+            Reason #{hoveredCandleIndex + 1}
+          </div>
+          <div style={{ fontWeight: "bold", fontSize: "1.3rem" }}>
+            {LOVE_REASONS[hoveredCandleIndex]}
+          </div>
+        </div>
+      )}
+
+      {hasAnimationCompleted && !allCandlesBlown && (
+        <div className="hint-overlay">
+          Click each candle to see why I love you ✨<br />
+          <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>
+            or press space to blow them all out
+          </span>
+        </div>
+      )}
+
+      {/* Video Message Overlay */}
+      {showVideo && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+            background: "rgba(0, 0, 0, 0.95)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            padding: "2rem",
+          }}
+        >
+          <video
+            controls
+            autoPlay
+            style={{
+              maxWidth: "90%",
+              maxHeight: "80vh",
+              borderRadius: "12px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+            }}
+          >
+            <source src="/birthday-message.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <button
+            onClick={() => setShowVideo(false)}
+            style={{
+              marginTop: "2rem",
+              padding: "1rem 2rem",
+              background: "#ff69b4",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "1.2rem",
+              cursor: "pointer",
+              fontFamily: '"Courier New", monospace',
+              letterSpacing: "0.2em",
+              transition: "all 0.3s",
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#ff1493")}
+            onMouseOut={(e) => (e.currentTarget.style.background = "#ff69b4")}
+          >
+            CLOSE
+          </button>
+        </div>
+      )}
+
       <Canvas
         gl={{ alpha: true }}
         style={{ background: "transparent" }}
@@ -551,16 +793,23 @@ export default function App() {
         <Suspense fallback={null}>
           <AnimatedScene
             isPlaying={isScenePlaying}
-            candleLit={isCandleLit}
+            candlesLit={candlesLit}
             onBackgroundFadeChange={setBackgroundOpacity}
             onEnvironmentProgressChange={setEnvironmentProgress}
             onAnimationComplete={() => setHasAnimationCompleted(true)}
             cards={BIRTHDAY_CARDS}
             activeCardId={activeCardId}
             onToggleCard={handleCardToggle}
+            hoveredCandleIndex={hoveredCandleIndex}
+            onCandleHover={setHoveredCandleIndex}
+            onCandleClick={handleCandleClick}
           />
           <ambientLight intensity={(1 - environmentProgress) * 0.8} />
-          <directionalLight intensity={0.5} position={[2, 10, 0]} color={[1, 0.9, 0.95]}/>
+          <directionalLight
+            intensity={0.5}
+            position={[2, 10, 0]}
+            color={[1, 0.9, 0.95]}
+          />
           <Environment
             files={["/shanghai_bund_4k.hdr"]}
             backgroundRotation={[0, 3.3, 0]}
@@ -569,7 +818,9 @@ export default function App() {
             environmentIntensity={0.1 * environmentProgress}
             backgroundIntensity={0.05 * environmentProgress}
           />
-          <EnvironmentBackgroundController intensity={0.05 * environmentProgress} />
+          <EnvironmentBackgroundController
+            intensity={0.05 * environmentProgress}
+          />
           <Fireworks isActive={fireworksActive} origin={[0, 10, 0]} />
           <ConfiguredOrbitControls />
         </Suspense>
