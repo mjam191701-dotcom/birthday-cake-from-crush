@@ -108,7 +108,7 @@ const TYPED_LINES = [
   "...",
   "> Since I can't be there with you right now. I made this",
   "...",
-  "I love you so much"
+  "I love you so much",
 ];
 const TYPED_CHAR_DELAY = 100;
 const POST_TYPING_SCENE_DELAY = 1000;
@@ -442,18 +442,18 @@ export default function App() {
   }, []);
 
   // Time zones - Change 'America/Chicago' to your timezone
-  const hisTimeZone = "America/Chicago";
-  const yourTimeZone = "Asia/Kolkata"; // India timezone
+  const yourTimeZone = "America/Chicago";
+  const herTimeZone = "Asia/Kolkata"; // India timezone
 
-  const hisTime = currentTime.toLocaleTimeString("en-US", {
-    timeZone: hisTimeZone,
+  const yourTime = currentTime.toLocaleTimeString("en-US", {
+    timeZone: yourTimeZone,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
   });
 
-  const yourTime = currentTime.toLocaleTimeString("en-US", {
-    timeZone: yourTimeZone,
+  const herTime = currentTime.toLocaleTimeString("en-US", {
+    timeZone: herTimeZone,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
