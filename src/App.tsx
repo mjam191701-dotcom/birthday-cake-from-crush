@@ -106,9 +106,9 @@ const TYPED_LINES = [
   "...",
   "> today is your 18th birthday",
   "...",
-  "> so i made you this",
+  "> so i made you this. i hope you like it",
   "...",
-  "💖 happy birthday gorgeous 💖"
+  "I love you so much my baby"
 ];
 const TYPED_CHAR_DELAY = 100;
 const POST_TYPING_SCENE_DELAY = 1000;
