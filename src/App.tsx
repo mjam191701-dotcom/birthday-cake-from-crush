@@ -442,18 +442,18 @@ export default function App() {
   }, []);
 
   // Time zones - Change 'America/Chicago' to your timezone
-  const yourTimeZone = "America/Chicago";
-  const herTimeZone = "Asia/Kolkata"; // India timezone
+  const hisTimeZone = "America/Chicago";
+  const yourTimeZone = "Asia/Kolkata"; // India timezone
 
-  const yourTime = currentTime.toLocaleTimeString("en-US", {
-    timeZone: yourTimeZone,
+  const hisTime = currentTime.toLocaleTimeString("en-US", {
+    timeZone: hisTimeZone,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
   });
 
-  const herTime = currentTime.toLocaleTimeString("en-US", {
-    timeZone: herTimeZone,
+  const yourTime = currentTime.toLocaleTimeString("en-US", {
+    timeZone: yourTimeZone,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
