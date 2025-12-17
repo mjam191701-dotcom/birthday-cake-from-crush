@@ -30,23 +30,23 @@ const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 // 18 Reasons I Love You
 const LOVE_REASONS = [
   "Your smile lights up my world",
-  "You make every day worth living",
+  "You make me laugh every day",
   "Your kindness inspires me",
-  "You are always there for me",
+  "You're incredibly smart and talented",
   "You always know how to cheer me up",
   "Your hugs feel like home",
   "You believe in me",
   "You're my best friend",
-  "Our goofy video calls",
-  "Your baby side",
+  "Your laugh is my favorite sound",
+  "You make every day an adventure",
   "You're beautiful inside and out",
   "You understand me like no one else",
-  "Your personality",
+  "Your dreams excite me",
   "You're patient and caring",
-  "How we talk about our future",
+  "You make me want to be better",
   "You're always there for me",
   "You complete me",
-  "I can't my imagine life without you",
+  "I can't imagine life without you",
 ];
 
 type AnimatedSceneProps = {
@@ -102,13 +102,13 @@ const BACKGROUND_FADE_START = Math.max(
 );
 
 const TYPED_LINES = [
-  "> Hi baby",
+  "> my love",
   "...",
-  "> Happy 18th birthday meri jaan",
+  "> today is your 18th birthday",
   "...",
-  "> Since I can't be there with you right now. I made this",
+  "> so i made you this",
   "...",
-  "I love you so much",
+  "💖 happy birthday gorgeous 💖",
 ];
 const TYPED_CHAR_DELAY = 100;
 const POST_TYPING_SCENE_DELAY = 1000;
@@ -423,15 +423,13 @@ export default function App() {
   const [sceneStarted, setSceneStarted] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [hasAnimationCompleted, setHasAnimationCompleted] = useState(false);
-  const [candlesLit, setCandlesLit] = useState<boolean[]>(Array(18).fill(true));
+  const [candlesLit, setCandlesLit] = useState(Array(18).fill(true));
   const [fireworksActive, setFireworksActive] = useState(false);
-  const [activeCardId, setActiveCardId] = useState<string | null>(null);
-  const [hoveredCandleIndex, setHoveredCandleIndex] = useState<number | null>(
-    null
-  );
+  const [activeCardId, setActiveCardId] = useState(null);
+  const [hoveredCandleIndex, setHoveredCandleIndex] = useState(null);
   const [showVideo, setShowVideo] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
+  const backgroundAudioRef = useRef(null);
 
   // Time sync effect
   useEffect(() => {
