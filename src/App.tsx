@@ -104,11 +104,11 @@ const BACKGROUND_FADE_START = Math.max(
 const TYPED_LINES = [
   "> my love",
   "...",
-  "> today is your 18th birthday",
+  "> happyyyy 18th birthday meri jaan",
   "...",
-  "> so i made you this",
+  "> since i cannot be there with you rn, i made you this",
   "...",
-  "💖 happy birthday gorgeous 💖"
+  "I love you with all my heart"
 ];
 const TYPED_CHAR_DELAY = 100;
 const POST_TYPING_SCENE_DELAY = 1000;
