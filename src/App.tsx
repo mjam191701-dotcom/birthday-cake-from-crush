@@ -106,9 +106,9 @@ const TYPED_LINES = [
   "...",
   "> today is your 18th birthday",
   "...",
-  "> so i made you this. i hope you like it",
+  "> so i made you this",
   "...",
-  "I love you so much my baby"
+  "💖 happy birthday gorgeous 💖"
 ];
 const TYPED_CHAR_DELAY = 100;
 const POST_TYPING_SCENE_DELAY = 1000;
@@ -575,6 +575,11 @@ export default function App() {
   }, []);
 
   const allCandlesBlown = candlesLit.every(lit => !lit);
+  
+  // Track which candle to blow next
+  const nextCandleIndex = useMemo(() => {
+    return candlesLit.findIndex(lit => lit);
+  }, [candlesLit]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -588,19 +593,38 @@ export default function App() {
         return;
       }
       if (hasAnimationCompleted && !allCandlesBlown) {
-        // Blow out all candles with spacebar
-        setCandlesLit(Array(18).fill(false));
-        setFireworksActive(true);
-        // Show video after 3 seconds of fireworks
-        setTimeout(() => {
-          setShowVideo(true);
-        }, 3000);
+        // Blow out one candle at a time
+        const candleIndex = nextCandleIndex;
+        if (candleIndex !== -1) {
+          setCandlesLit(prev => {
+            const newState = [...prev];
+            newState[candleIndex] = false;
+            
+            // Show the reason for this candle
+            setHoveredCandleIndex(candleIndex);
+            setTimeout(() => {
+              setHoveredCandleIndex(null);
+            }, 3000); // Show reason for 3 seconds
+            
+            // Check if all candles are blown
+            const allBlown = newState.every(lit => !lit);
+            if (allBlown) {
+              setFireworksActive(true);
+              // Show video after 3 seconds
+              setTimeout(() => {
+                setShowVideo(true);
+              }, 3000);
+            }
+            
+            return newState;
+          });
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasStarted, hasAnimationCompleted, allCandlesBlown, playBackgroundMusic]);
+  }, [hasStarted, hasAnimationCompleted, allCandlesBlown, nextCandleIndex, playBackgroundMusic]);
 
   const handleCardToggle = useCallback((id: string) => {
     setActiveCardId((current) => (current === id ? null : id));
@@ -712,8 +736,8 @@ export default function App() {
 
       {hasAnimationCompleted && !allCandlesBlown && (
         <div className="hint-overlay">
-          Click each candle to see why I love you ✨<br/>
-          <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>or press space to blow them all out</span>
+          Press SPACE to blow out candles one by one 🕯️<br/>
+          <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Each candle reveals a reason why I love you ✨</span>
         </div>
       )}
 
