@@ -104,11 +104,11 @@ const BACKGROUND_FADE_START = Math.max(
 const TYPED_LINES = [
   "> my love",
   "...",
-  "> today is your 18th birthday",
+  "> happyyyy 18th birthday meri jaan",
   "...",
-  "> so i made you this",
+  "> since i cannot be there with you rn, i made you this",
   "...",
-  "💖 happy birthday gorgeous 💖"
+  "I love you with all my heart"
 ];
 const TYPED_CHAR_DELAY = 100;
 const POST_TYPING_SCENE_DELAY = 1000;
@@ -441,18 +441,6 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Pause background music when video shows
-  useEffect(() => {
-    const audio = backgroundAudioRef.current;
-    if (!audio) return;
-    
-    if (showVideo) {
-      audio.pause();
-    } else if (hasStarted && sceneStarted) {
-      audio.play().catch(() => {});
-    }
-  }, [showVideo, hasStarted, sceneStarted]);
-
   // Time sync effect
   useEffect(() => {
     const timer = setInterval(() => {
@@ -770,9 +758,8 @@ export default function App() {
             controls
             autoPlay
             style={{
-              width: '90vw',
-              maxWidth: '1200px',
-              height: 'auto',
+              maxWidth: '90%',
+              maxHeight: '80vh',
               borderRadius: '12px',
               boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
             }}
@@ -781,14 +768,7 @@ export default function App() {
             Your browser does not support the video tag.
           </video>
           <button
-            onClick={() => {
-              setShowVideo(false);
-              // Resume background music
-              const audio = backgroundAudioRef.current;
-              if (audio) {
-                audio.play().catch(() => {});
-              }
-            }}
+            onClick={() => setShowVideo(false)}
             style={{
               marginTop: '2rem',
               padding: '1rem 2rem',
