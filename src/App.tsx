@@ -441,6 +441,18 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Pause background music when video shows
+  useEffect(() => {
+    const audio = backgroundAudioRef.current;
+    if (!audio) return;
+    
+    if (showVideo) {
+      audio.pause();
+    } else if (hasStarted && sceneStarted) {
+      audio.play().catch(() => {});
+    }
+  }, [showVideo, hasStarted, sceneStarted]);
+
   // Time sync effect
   useEffect(() => {
     const timer = setInterval(() => {
@@ -768,7 +780,14 @@ export default function App() {
             Your browser does not support the video tag.
           </video>
           <button
-            onClick={() => setShowVideo(false)}
+            onClick={() => {
+              setShowVideo(false);
+              // Resume background music
+              const audio = backgroundAudioRef.current;
+              if (audio) {
+                audio.play().catch(() => {});
+              }
+            }}
             style={{
               marginTop: '2rem',
               padding: '1rem 2rem',
